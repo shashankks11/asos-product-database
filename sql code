@@ -1,0 +1,201 @@
+-- ASOS Database Schema for SQL Server Management Studio
+
+-- Create Brand table
+CREATE TABLE brand (
+    brand_id INT IDENTITY(1,1) PRIMARY KEY,
+    brand_name NVARCHAR(100) NOT NULL,
+    brand_description NTEXT
+);
+
+-- Create Size Category table
+CREATE TABLE size_category (
+    category_id INT IDENTITY(1,1) PRIMARY KEY,
+    category_name NVARCHAR(50) NOT NULL
+);
+
+-- Create Product Gender table (referenced by product_category)
+CREATE TABLE product_gender (
+    product_gender_id INT IDENTITY(1,1) PRIMARY KEY,
+    gender_name NVARCHAR(20) NOT NULL
+);
+
+-- Create Season table
+CREATE TABLE season (
+    season_id INT IDENTITY(1,1) PRIMARY KEY,
+    season_name NVARCHAR(30) NOT NULL
+);
+
+-- Create Neckline table
+CREATE TABLE neckline (
+    neckline_id INT IDENTITY(1,1) PRIMARY KEY,
+    neckline_name NVARCHAR(50) NOT NULL
+);
+
+-- Create Length table
+CREATE TABLE length (
+    length_id INT IDENTITY(1,1) PRIMARY KEY,
+    length_name NVARCHAR(50) NOT NULL
+);
+
+-- Create Sleeve Length table
+CREATE TABLE sleeve_length (
+    sleeve_id INT IDENTITY(1,1) PRIMARY KEY,
+    sleeve_name NVARCHAR(50) NOT NULL
+);
+
+-- Create Body Fit table
+CREATE TABLE body_fit (
+    body_fit_id INT IDENTITY(1,1) PRIMARY KEY,
+    body_fit_name NVARCHAR(50) NOT NULL
+);
+
+-- Create Style table
+CREATE TABLE style (
+    style_id INT IDENTITY(1,1) PRIMARY KEY,
+    style_name NVARCHAR(50) NOT NULL
+);
+
+-- Create Dress Name table
+CREATE TABLE dress_name (
+    dress_name_id INT IDENTITY(1,1) PRIMARY KEY,
+    dress_name NVARCHAR(100) NOT NULL
+);
+
+-- Create Colour table
+CREATE TABLE colour (
+    colour_id INT IDENTITY(1,1) PRIMARY KEY,
+    colour_name NVARCHAR(50) NOT NULL
+);
+
+-- Create Product Category table
+CREATE TABLE product_category (
+    product_category_id INT IDENTITY(1,1) PRIMARY KEY,
+    category_name NVARCHAR(100) NOT NULL,
+    category_image NVARCHAR(255),
+    product_gender_id INT,
+    category_description NTEXT,
+    parent_category_id INT,
+    CONSTRAINT FK_product_category_gender 
+        FOREIGN KEY (product_gender_id) REFERENCES product_gender(product_gender_id),
+    CONSTRAINT FK_product_category_parent 
+        FOREIGN KEY (parent_category_id) REFERENCES product_category(product_category_id)
+);
+
+-- Create Product table
+CREATE TABLE product (
+    product_id INT IDENTITY(1,1) PRIMARY KEY,
+    product_category_id INT NOT NULL,
+    brand_id INT NOT NULL,
+    product_name NVARCHAR(200) NOT NULL,
+    original_price MONEY,
+    sales_price MONEY,
+    product_description NTEXT,
+    model_height NVARCHAR(20),
+    model_wearing NVARCHAR(50),
+    size_category_id INT,
+    CONSTRAINT FK_product_category 
+        FOREIGN KEY (product_category_id) REFERENCES product_category(product_category_id),
+    CONSTRAINT FK_product_brand 
+        FOREIGN KEY (brand_id) REFERENCES brand(brand_id),
+    CONSTRAINT FK_product_size_category 
+        FOREIGN KEY (size_category_id) REFERENCES size_category(category_id)
+);
+
+-- Create Product Item table
+CREATE TABLE product_item (
+    product_item_id INT IDENTITY(1,1) PRIMARY KEY,
+    product_id INT NOT NULL,
+    colour_id INT NOT NULL,
+    original_price MONEY,
+    sales_price MONEY,
+    product_code NVARCHAR(50),
+    season_id INT,
+    neckline_id INT,
+    length_id INT,
+    sleeve_id INT,
+    body_fit_id INT,
+    style_id INT,
+    dress_id INT,
+    CONSTRAINT FK_product_item_product 
+        FOREIGN KEY (product_id) REFERENCES product(product_id),
+    CONSTRAINT FK_product_item_colour 
+        FOREIGN KEY (colour_id) REFERENCES colour(colour_id),
+    CONSTRAINT FK_product_item_season 
+        FOREIGN KEY (season_id) REFERENCES season(season_id),
+    CONSTRAINT FK_product_item_neckline 
+        FOREIGN KEY (neckline_id) REFERENCES neckline(neckline_id),
+    CONSTRAINT FK_product_item_length 
+        FOREIGN KEY (length_id) REFERENCES length(length_id),
+    CONSTRAINT FK_product_item_sleeve 
+        FOREIGN KEY (sleeve_id) REFERENCES sleeve_length(sleeve_id),
+    CONSTRAINT FK_product_item_body_fit 
+        FOREIGN KEY (body_fit_id) REFERENCES body_fit(body_fit_id),
+    CONSTRAINT FK_product_item_style 
+        FOREIGN KEY (style_id) REFERENCES style(style_id),
+    CONSTRAINT FK_product_item_dress 
+        FOREIGN KEY (dress_id) REFERENCES dress_name(dress_name_id)
+);
+
+-- Create Product Image table
+CREATE TABLE product_image (
+    product_id INT,
+    product_item_id INT,
+    image_filename NVARCHAR(255) NOT NULL,
+    CONSTRAINT PK_product_image PRIMARY KEY (product_id, product_item_id),
+    CONSTRAINT FK_product_image_product 
+        FOREIGN KEY (product_id) REFERENCES product(product_id),
+    CONSTRAINT FK_product_image_product_item 
+        FOREIGN KEY (product_item_id) REFERENCES product_item(product_item_id)
+);
+
+-- Create Size Option table
+CREATE TABLE size_option (
+    size_option_id INT IDENTITY(1,1) PRIMARY KEY,
+    size_category_id INT NOT NULL,
+    size_name NVARCHAR(20) NOT NULL,
+    sort_order INT,
+    CONSTRAINT FK_size_option_category 
+        FOREIGN KEY (size_category_id) REFERENCES size_category(category_id)
+);
+
+-- Create Product Variation table
+CREATE TABLE product_variation (
+    product_variation_id INT IDENTITY(1,1) PRIMARY KEY,
+    product_item_id INT NOT NULL,
+    size_option_id INT NOT NULL,
+    quantity_in_stock INT DEFAULT 0,
+    CONSTRAINT FK_product_variation_item 
+        FOREIGN KEY (product_item_id) REFERENCES product_item(product_item_id),
+    CONSTRAINT FK_product_variation_size 
+        FOREIGN KEY (size_option_id) REFERENCES size_option(size_option_id)
+);
+
+-- Create indexes for better performance
+CREATE NONCLUSTERED INDEX IX_product_category ON product(product_category_id);
+CREATE NONCLUSTERED INDEX IX_product_brand ON product(brand_id);
+CREATE NONCLUSTERED INDEX IX_product_item_product ON product_item(product_id);
+CREATE NONCLUSTERED INDEX IX_product_item_colour ON product_item(colour_id);
+CREATE NONCLUSTERED INDEX IX_product_variation_item ON product_variation(product_item_id);
+CREATE NONCLUSTERED INDEX IX_product_variation_size ON product_variation(size_option_id);
+CREATE NONCLUSTERED INDEX IX_size_option_category ON size_option(size_category_id);
+
+-- Optional: Add some sample data insertion statements
+/*
+-- Sample Brand data
+INSERT INTO brand (brand_name, brand_description) VALUES 
+('ASOS DESIGN', 'ASOS own brand fashion collection'),
+('Nike', 'Sports and lifestyle brand'),
+('Adidas', 'Sports and lifestyle brand');
+
+-- Sample Product Gender data
+INSERT INTO product_gender (gender_name) VALUES 
+('Men'),
+('Women'),
+('Unisex');
+
+-- Sample Season data
+INSERT INTO season (season_name) VALUES 
+('Spring/Summer'),
+('Autumn/Winter'),
+('All Season');
+*/
